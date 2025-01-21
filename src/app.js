@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Productos from "./Productos"; // Importa el componente React
+import Compras from "./Compras"; // Importa el componente Compras
 
 const App = () => {
   return (
@@ -10,8 +11,9 @@ const App = () => {
           <Routes>
             {/* Ruta principal para el componente Productos */}
             <Route path="/" element={<Productos />} />
+             {/* Ruta para el componente Compras */}
+            <Route path="/compras" element={<Compras />} />
 
-            {/* Puedes agregar otras rutas aquí si es necesario */}
           </Routes>
         </div>
       </div>

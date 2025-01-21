@@ -1,52 +1,112 @@
 import React, { useEffect, useState } from "react";
-import { collection, getDocs, query } from "firebase/firestore";
-import db from "./firebase"; // Asegúrate de que este archivo tenga la configuración correcta
+import { collection, addDoc } from "firebase/firestore";
+import db from "./firebase"; // Archivo de configuración de Firebase
+import * as XLSX from "xlsx";
 import "./productos.css"; // Estilos para el componente
 
-// Función de consulta: Obtener todos los productos
-export const consultarProductos = async () => {
+// Función: Agregar productos de forma masiva
+export const agregarProductosMasivos = async (productos) => {
   try {
     const productosRef = collection(db, "productos"); // Referencia a la colección
-    const q = query(productosRef); // Puedes personalizar la consulta si es necesario
-    const querySnapshot = await getDocs(q);
-
-    const productos = [];
-    querySnapshot.forEach((doc) => {
-      productos.push({ id: doc.id, ...doc.data() });
+    const batchPromises = productos.map(async (producto) => {
+      await addDoc(productosRef, producto); // Añade cada producto
     });
 
-    console.log("Productos consultados:", productos);
-    return productos; // Devuelve los productos
+    await Promise.all(batchPromises); // Espera a que se completen todas las operaciones
+    console.log("Productos agregados de forma masiva.");
   } catch (error) {
-    console.error("Error consultando productos:", error);
+    console.error("Error agregando productos de forma masiva:", error);
     throw error;
   }
 };
 
-// Componente React: Mostrar productos
+// Componente React
 const Productos = () => {
-  const [productos, setProductos] = useState([]); // Estado para almacenar los productos
+  const [productosExcel, setProductosExcel] = useState([]); // Estado para almacenar los productos del Excel
+  const [archivoCargado, setArchivoCargado] = useState(null); // Estado para el archivo cargado
 
-  useEffect(() => {
-    const cargarProductos = async () => {
-      try {
-        const data = await consultarProductos(); // Llamada a la función de consulta
-        setProductos(data); // Actualizar el estado
-      } catch (error) {
-        console.error("Error cargando productos:", error);
+  // Estructura esperada de los productos
+  const estructuraEsperada = [
+    "calidad",
+    "cod_pos",
+    "forma_venta",
+    "id_forma_venta",
+    "id_grupo",
+    "id_linea",
+    "id_prod",
+    "id_siigo",
+    "nombre_prod",
+    "precioc_uni",
+    "preciov_uni",
+    "presentacion",
+    "saldo",
+    "unidad",
+  ];
+
+  // Función para procesar el archivo Excel
+  const manejarArchivo = (e) => {
+    const archivo = e.target.files[0];
+    if (!archivo) return;
+
+    const lector = new FileReader();
+    lector.onload = (evento) => {
+      const datos = new Uint8Array(evento.target.result);
+      const libro = XLSX.read(datos, { type: "array" });
+      const hoja = libro.Sheets[libro.SheetNames[0]]; // Primera hoja del archivo
+      const productos = XLSX.utils.sheet_to_json(hoja); // Convierte a JSON
+
+      // Validar estructura
+      const productosValidados = productos.filter((producto) => {
+        return estructuraEsperada.every((campo) => campo in producto);
+      });
+
+      if (productosValidados.length !== productos.length) {
+        alert(
+          "Algunos productos no tienen la estructura esperada y fueron omitidos."
+        );
       }
-    };
 
-    cargarProductos(); // Cargar productos al montar el componente
-  }, []); // Dependencia vacía para que se ejecute solo una vez
+      console.log("Productos validados:", productosValidados);
+      setProductosExcel(productosValidados); // Almacena los productos validados
+    };
+    lector.readAsArrayBuffer(archivo); // Lee el archivo como ArrayBuffer
+    setArchivoCargado(archivo);
+  };
+
+  // Función para enviar los productos a Firestore
+  const cargarProductosEnFirestore = async () => {
+    if (productosExcel.length === 0) {
+      alert("No hay productos para cargar.");
+      return;
+    }
+
+    try {
+      await agregarProductosMasivos(productosExcel); // Llama a la función masiva
+      alert("Productos cargados exitosamente.");
+      setProductosExcel([]); // Limpia los productos
+      setArchivoCargado(null); // Limpia el archivo
+    } catch (error) {
+      console.error("Error al cargar productos:", error);
+      alert("Error al cargar productos. Revisa la consola para más detalles.");
+    }
+  };
 
   return (
     <div className="productos-container">
-      <h1>Lista de Productos</h1>
+      <h1>Productos: Importar desde Excel</h1>
+
+      <input type="file" accept=".xlsx, .xls" onChange={manejarArchivo} />
+      <button
+        onClick={cargarProductosEnFirestore}
+        disabled={!archivoCargado || productosExcel.length === 0}
+      >
+        Cargar productos a Firestore
+      </button>
+
       <ul>
-        {productos.map((producto) => (
-          <li key={producto.id}>
-            {producto.nombre_prod || "Producto sin nombre"}
+        {productosExcel.map((producto, index) => (
+          <li key={index}>
+            {JSON.stringify(producto)} {/* Muestra cada producto cargado */}
           </li>
         ))}
       </ul>
@@ -54,4 +114,4 @@ const Productos = () => {
   );
 };
 
-export default Productos; // Exportación del componente React
+export default Productos;
