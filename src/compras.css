@@ -1,45 +1,171 @@
+/* Contenedor principal */
 .compras-container {
-    margin: 20px auto;
-    max-width: 600px;
-    font-family: Arial, sans-serif;
-  }
-  
-  .compras-container h1 {
-    text-align: center;
-    color: #333;
-  }
-  
-  .compras-container form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-  }
-  
-  .compras-container label {
-    display: flex;
-    flex-direction: column;
-    font-size: 14px;
-    color: #555;
-  }
-  
-  .compras-container input,
-  .compras-container select {
-    padding: 8px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-  }
-  
-  .compras-container button {
-    padding: 10px 15px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  
-  .compras-container button:hover {
-    background-color: #45a049;
-  }
-  
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  background-color: #f5f5f5;
+}
+
+/* Formulario de registro */
+.compras-form {
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #ffffff;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.compras-form h2 {
+  margin-bottom: 20px;
+  font-size: 20px;
+  text-align: center;
+  color: #333;
+}
+
+.form-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.form-header label {
+  flex: 1 1 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 14px;
+  color: #555;
+}
+
+.form-header input,
+.form-header select {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+/* Cuerpo del formulario */
+.form-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-body label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 14px;
+  color: #555;
+}
+
+.form-body input,
+.form-body select {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.form-body button {
+  align-self: flex-start;
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.form-body button:hover {
+  background-color: #0056b3;
+}
+
+/* Tabla de productos registrados */
+.productos-registrados {
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #ffffff;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.productos-registrados h2 {
+  margin-bottom: 15px;
+  font-size: 20px;
+  color: #333;
+  text-align: center;
+}
+
+.productos-registrados table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.productos-registrados th,
+.productos-registrados td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+  font-size: 14px;
+}
+
+.productos-registrados th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+  text-align: center;
+}
+
+.productos-registrados td {
+  text-align: center;
+}
+
+.productos-registrados button {
+  margin-right: 5px;
+  padding: 5px 10px;
+  background-color: #28a745;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.productos-registrados button:hover {
+  background-color: #218838;
+}
+
+.productos-registrados button:last-child {
+  background-color: #dc3545;
+}
+
+.productos-registrados button:last-child:hover {
+  background-color: #c82333;
+}
+
+/* Botón de registrar compra mejorado */
+.registrar-compra {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.registrar-compra button {
+  padding: 15px 25px;
+  font-size: 16px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.registrar-compra button:hover {
+  background-color: #0056b3;
+}
