@@ -1,0 +1,136 @@
+/* Contenedor principal */
+.cambio-precios-container {
+  display: flex;
+  flex-direction: column;
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  gap: 20px;
+}
+
+/* Contenedor de la cabecera */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  border-radius: 5px;
+}
+
+/* Título de la cabecera */
+.header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+/* Botón de guardar cambios */
+.guardar-cambios {
+  padding: 10px 20px;
+  font-size: 1rem;
+  color: #fff;
+  background-color: #007bff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  align-self: flex-end;
+}
+
+.guardar-cambios:hover {
+  background-color: #0056b3;
+}
+
+/* Navegador de productos */
+.navegador {
+  width: 25%;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px;
+  background-color: #f9f9f9;
+}
+
+.navegador h3 {
+  text-align: center;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.navegador ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 300px;
+  overflow-y: auto;
+  border-top: 1px solid #ddd;
+}
+
+.navegador ul li {
+  padding: 10px;
+  cursor: pointer;
+  border-bottom: 1px solid #ddd;
+  transition: background-color 0.2s ease;
+}
+
+.navegador ul li.seleccionado {
+  background-color: #007bff;
+  color: white;
+}
+
+.navegador ul li:hover {
+  background-color: #f0f0f0;
+}
+
+/* Filtros */
+.filtros {
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.filtros label {
+  font-size: 1rem;
+  margin-right: 10px;
+  color: #333;
+}
+
+.filtros select {
+  padding: 5px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+/* Tabla de productos seleccionados */
+.productos-main {
+  flex: 1;
+}
+
+.productos-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.productos-table th,
+.productos-table td {
+  border: 1px solid #ddd;
+  text-align: center;
+  padding: 10px;
+  font-size: 1rem;
+}
+
+.productos-table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+.productos-table td input {
+  width: 80%;
+  padding: 5px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}

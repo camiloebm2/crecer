@@ -1,0 +1,37 @@
+.app {
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Navegación */
+  .navigation {
+    display: flex;
+    justify-content: center;
+    background-color: #007bff;
+    padding: 10px;
+    gap: 15px;
+  }
+  
+  .nav-button {
+    color: white;
+    text-decoration: none;
+    padding: 10px 15px;
+    background-color: #0056b3;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .nav-button:hover {
+    background-color: #003d80;
+  }
+  
+  /* Contenido principal */
+  .content {
+    padding: 20px;
+    margin-top: 10px;
+  }
+  
