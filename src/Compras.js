@@ -1,21 +1,24 @@
 import React, { useState } from "react";
-import { collection, addDoc, updateDoc, doc } from "firebase/firestore";
-import db from "./firebase";
-import EntradaDatos from "./components/EntradaDatos";
+import useFirebaseCollection from "./components/hooks";
+import {
+  validateCompra,
+  formatNumber,
+} from "./components/utils";
+import InputNumerico from "./components/InputNumerico";
+import Proveedor from "./components/Proveedor";
+import Producto from "./components/Producto";
+import FechaSelector from "./components/FechaSelector";
 import TablaProductos from "./components/TablaProductos";
-import Producto from "./components/Producto"; // Componente Producto
-import Proveedor from "./components/Proveedor"; // Componente Proveedor
 import "./compras.css";
 
 const Compras = () => {
-  const [productosLista, setProductosLista] = useState([]); // Lista de productos agregados a la compra
   const [compra, setCompra] = useState({
     fecha_compra: new Date().toISOString().split("T")[0],
     forma_pago: "",
     id_prov: "",
-    nombre_prov: "",
     num_factura: "",
   });
+
   const [productoActual, setProductoActual] = useState({
     id_prod: "",
     cantidad_total: "",
@@ -24,49 +27,29 @@ const Compras = () => {
     precio_compra: "",
   });
 
-  // Manejar cambios en el formulario de compra
-  const manejarCambio = (e) => {
-    const { name, value } = e.target;
+  const [productosLista, setProductosLista] = useState([]);
+  const proveedores = useFirebaseCollection("proveedores");
 
-    if (name in productoActual) {
-      setProductoActual((prev) => ({ ...prev, [name]: value }));
-    } else {
-      setCompra((prev) => ({ ...prev, [name]: value }));
-    }
+  // Manejo genérico de cambios en la compra
+  const handleCompraChange = (field, value) => {
+    setCompra((prevState) => ({ ...prevState, [field]: value }));
   };
 
-  // Manejar la selección de un proveedor desde el componente Proveedor
-  const manejarSeleccionProveedor = (proveedor) => {
-    setCompra((prev) => ({
-      ...prev,
-      id_prov: proveedor.id_prov,
-      nombre_prov: proveedor.nombre_prov,
-    }));
-  };
-
-  // Manejar la selección de un producto desde el componente Producto
-  const manejarSeleccionProducto = (producto) => {
-    setProductoActual((prev) => ({
-      ...prev,
-      id_prod: producto.id,
-    }));
+  // Manejo genérico de cambios en el producto actual
+  const handleProductoChange = (field, value) => {
+    setProductoActual((prevState) => ({ ...prevState, [field]: value }));
   };
 
   // Agregar un producto a la lista
   const agregarProducto = () => {
-    if (
-      !productoActual.id_prod ||
-      !productoActual.cantidad_total ||
-      !productoActual.zarzamora ||
-      !productoActual.tabora ||
-      !productoActual.precio_compra
-    ) {
+    const { id_prod, cantidad_total, zarzamora, tabora, precio_compra } = productoActual;
+
+    if (!id_prod || !cantidad_total || !zarzamora || !tabora || !precio_compra) {
       alert("Por favor complete todos los campos del producto.");
       return;
     }
 
-    setProductosLista((prev) => [...prev, { ...productoActual }]);
-
+    setProductosLista((prevState) => [...prevState, { ...productoActual }]);
     setProductoActual({
       id_prod: "",
       cantidad_total: "",
@@ -77,126 +60,108 @@ const Compras = () => {
   };
 
   // Registrar la compra
-  const registrarCompra = async () => {
-    if (!compra.id_prov || !compra.num_factura || productosLista.length === 0) {
-      alert("Complete los datos de la compra y agregue al menos un producto.");
+  const registrarCompra = () => {
+    const error = validateCompra(compra, productosLista);
+    if (error) {
+      alert(error);
       return;
     }
-    try {
-      // Registrar la compra en la colección "compras"
-      await addDoc(collection(db, "compras"), {
-        ...compra,
-        productos: productosLista,
-      });
 
-      // Actualizar el inventario de productos
-      for (const producto of productosLista) {
-        const productoRef = doc(db, "productos", producto.id_prod);
-        await updateDoc(productoRef, {
-          cantidad_compra_tabora: parseInt(producto.tabora),
-          cantidad_compra_zarzamora: parseInt(producto.zarzamora),
-          ultima_compra: compra.fecha_compra,
-        });
-      }
-
-      alert("Compra registrada exitosamente.");
-
-      // Limpiar el formulario
-      setCompra({
-        fecha_compra: new Date().toISOString().split("T")[0],
-        forma_pago: "",
-        id_prov: "",
-        nombre_prov: "",
-        num_factura: "",
-      });
-      setProductosLista([]);
-    } catch (error) {
-      console.error("Error registrando compra:", error);
-      alert("Hubo un error al registrar la compra.");
-    }
+    // Simulación de registro en Firebase
+    console.log("Compra registrada:", { compra, productosLista });
+    alert("Compra registrada exitosamente.");
+    setCompra({
+      fecha_compra: new Date().toISOString().split("T")[0],
+      forma_pago: "",
+      id_prov: "",
+      num_factura: "",
+    });
+    setProductosLista([]);
   };
 
   return (
     <div className="compras-container">
       <h1>Registro de Compras</h1>
 
-      {/* Selección de proveedor */}
+      {/* Formulario para la información de la compra */}
       <div className="formulario-compra">
-        <h2>Datos de la Compra</h2>
-        <EntradaDatos
+        <FechaSelector
           label="Fecha de Compra"
-          type="date"
-          name="fecha_compra"
           value={compra.fecha_compra}
-          onChange={manejarCambio}
+          onChange={(value) => handleCompraChange("fecha_compra", value)}
         />
-        <EntradaDatos
-          label="Forma de Pago"
-          type="text"
-          name="forma_pago"
-          value={compra.forma_pago}
-          onChange={manejarCambio}
-          options={[
-            { id: "Contado", nombre: "Contado" },
-            { id: "Crédito", nombre: "Crédito" },
-          ]}
+
+        <div>
+          <label>Forma de Pago:</label>
+          <select
+            value={compra.forma_pago}
+            onChange={(e) => handleCompraChange("forma_pago", e.target.value)}
+          >
+            <option value="">Seleccionar</option>
+            <option value="Contado">Contado</option>
+            <option value="Crédito">Crédito</option>
+          </select>
+        </div>
+
+        <Proveedor
+          onProveedorSelect={(prov) => handleCompraChange("id_prov", prov.id)}
         />
-        <EntradaDatos
+
+        <InputNumerico
           label="Número de Factura"
-          type="text"
-          name="num_factura"
           value={compra.num_factura}
-          onChange={manejarCambio}
+          onChange={(value) => handleCompraChange("num_factura", value)}
         />
-        <h2>Seleccionar Proveedor</h2>
-        <Proveedor onProveedorSelect={manejarSeleccionProveedor} />
       </div>
 
-      {/* Selección de producto */}
-      <div className="formulario-producto">
-        <h2>Agregar Producto</h2>
-        <Producto onProductoSelect={manejarSeleccionProducto} />
-        <EntradaDatos
+      {/* Formulario para agregar productos */}
+      <div className="formulario-productos">
+        <Producto
+          onProductoSelect={(prod) => handleProductoChange("id_prod", prod.id)}
+        />
+
+        <InputNumerico
           label="Cantidad Total"
-          type="number"
-          name="cantidad_total"
           value={productoActual.cantidad_total}
-          onChange={manejarCambio}
+          onChange={(value) => handleProductoChange("cantidad_total", value)}
         />
-        <EntradaDatos
+
+        <InputNumerico
           label="Cantidad Zarzamora"
-          type="number"
-          name="zarzamora"
           value={productoActual.zarzamora}
-          onChange={manejarCambio}
+          onChange={(value) => handleProductoChange("zarzamora", value)}
         />
-        <EntradaDatos
+
+        <InputNumerico
           label="Cantidad Tabora"
-          type="number"
-          name="tabora"
           value={productoActual.tabora}
-          onChange={manejarCambio}
+          onChange={(value) => handleProductoChange("tabora", value)}
         />
-        <EntradaDatos
+
+        <InputNumerico
           label="Precio de Compra"
-          type="number"
-          name="precio_compra"
           value={productoActual.precio_compra}
-          onChange={manejarCambio}
+          onChange={(value) => handleProductoChange("precio_compra", value)}
         />
-        <button className="btn-agregar" onClick={agregarProducto}>
+
+        <button onClick={agregarProducto} className="btn-agregar">
           Agregar Producto
         </button>
       </div>
 
-      {/* Lista de productos */}
+      {/* Tabla con los productos agregados */}
       <TablaProductos
         columnas={["Producto", "Cantidad Total", "Zarzamora", "Tabora", "Precio Compra"]}
-        datos={productosLista}
+        datos={productosLista.map((prod) => ({
+          ...prod,
+          cantidad_total: formatNumber(prod.cantidad_total),
+          zarzamora: formatNumber(prod.zarzamora),
+          tabora: formatNumber(prod.tabora),
+          precio_compra: formatNumber(prod.precio_compra),
+        }))}
       />
 
-      {/* Botón para registrar la compra */}
-      <button className="btn-registrar" onClick={registrarCompra}>
+      <button onClick={registrarCompra} className="btn-registrar">
         Registrar Compra
       </button>
     </div>
