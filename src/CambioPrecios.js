@@ -5,30 +5,52 @@ import "./cambioPrecios.css";
 
 const CambioPrecios = () => {
   const [productos, setProductos] = useState([]);
+  const [compras, setCompras] = useState([]);
   const [productosSeleccionados, setProductosSeleccionados] = useState([]);
-  const [filtro, setFiltro] = useState("todos"); // Filtros: 'todos', 'hoy', 'sinCompra'
+  const [filtro, setFiltro] = useState("todos");
 
   useEffect(() => {
-    const cargarProductos = async () => {
+    const cargarDatos = async () => {
       try {
-        // Obtener productos directamente desde la colección "productos"
+        // Cargar productos
         const productosSnapshot = await getDocs(collection(db, "productos"));
         const productosData = productosSnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
         setProductos(productosData);
+
+        // Cargar compras
+        const comprasSnapshot = await getDocs(collection(db, "compras"));
+        const comprasData = comprasSnapshot.docs.map((doc) => doc.data());
+        setCompras(comprasData);
       } catch (error) {
-        console.error("Error cargando productos:", error);
+        console.error("Error cargando datos:", error);
       }
     };
 
-    cargarProductos();
+    cargarDatos();
   }, []);
+
+  // Obtener cantidades acumuladas de Zarzamora y Tabora desde las compras
+  const obtenerCantidadPorPunto = (idProd, punto) => {
+    return compras
+      .filter((compra) =>
+        compra.productos.some((producto) => producto.id_prod === idProd)
+      )
+      .reduce((total, compra) => {
+        const producto = compra.productos.find(
+          (producto) => producto.id_prod === idProd
+        );
+        return total + (producto ? parseFloat(producto[punto]) || 0 : 0);
+      }, 0);
+  };
 
   const manejarSeleccionProducto = (producto) => {
     if (productosSeleccionados.find((p) => p.id === producto.id)) {
-      setProductosSeleccionados((prev) => prev.filter((p) => p.id !== producto.id));
+      setProductosSeleccionados((prev) =>
+        prev.filter((p) => p.id !== producto.id)
+      );
     } else {
       setProductosSeleccionados((prev) => [...prev, producto]);
     }
@@ -37,12 +59,12 @@ const CambioPrecios = () => {
   const manejarCambioPrecio = (id, campo, valor) => {
     setProductos((prev) =>
       prev.map((producto) =>
-        producto.id === id ? { ...producto, [campo]: parseFloat(valor) } : producto
+        producto.id === id ? { ...producto, [campo]: parseFloat(valor) || 0 } : producto
       )
     );
     setProductosSeleccionados((prev) =>
       prev.map((producto) =>
-        producto.id === id ? { ...producto, [campo]: parseFloat(valor) } : producto
+        producto.id === id ? { ...producto, [campo]: parseFloat(valor) || 0 } : producto
       )
     );
   };
@@ -82,26 +104,41 @@ const CambioPrecios = () => {
             <option value="sinCompra">Sin Compra</option>
           </select>
         </div>
-        <ul>
-          {productos.map((producto) => (
-            <li
-              key={producto.id}
-              className={productosSeleccionados.find((p) => p.id === producto.id) ? "seleccionado" : ""}
-              onClick={() => manejarSeleccionProducto(producto)}
-            >
-              {producto.nombre_prod}
-            </li>
-          ))}
-        </ul>
+        <div className="navegador-scroll">
+          <table className="navegador-table">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Cantidad Zarzamora</th>
+                <th>Cantidad Tabora</th>
+              </tr>
+            </thead>
+            <tbody>
+              {productos.map((producto) => (
+                <tr
+                  key={producto.id}
+                  className={
+                    productosSeleccionados.find((p) => p.id === producto.id)
+                      ? "seleccionado"
+                      : ""
+                  }
+                  onClick={() => manejarSeleccionProducto(producto)}
+                >
+                  <td>{producto.nombre_prod}</td>
+                  <td>{obtenerCantidadPorPunto(producto.id, "zarzamora")}</td>
+                  <td>{obtenerCantidadPorPunto(producto.id, "tabora")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-
       <div className="productos-main">
         <h2>Productos Seleccionados</h2>
         <table className="productos-table">
           <thead>
             <tr>
               <th>Producto</th>
-              <th>Precio Compra</th>
               <th>Precio Zarzamora</th>
               <th>Precio Tabora</th>
             </tr>
@@ -110,11 +147,6 @@ const CambioPrecios = () => {
             {productosSeleccionados.map((producto) => (
               <tr key={producto.id}>
                 <td>{producto.nombre_prod}</td>
-                <td>
-                  {producto.precioc_uni !== undefined
-                    ? `$${producto.precioc_uni.toFixed(2)}`
-                    : "No disponible"}
-                </td>
                 <td>
                   <input
                     type="number"

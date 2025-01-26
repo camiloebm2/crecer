@@ -10,7 +10,6 @@ const GestorColecciones = () => {
     "cliente",
     "compras",
     "contable",
-    "precios_por_punto",
     "presentacion",
     "productos",
     "proveedores",
