@@ -1,7 +1,6 @@
-// TablaProductos.js
 import React from "react";
 import PropTypes from "prop-types";
-import "./TablaProductos.css"; // Asegúrate de añadir estilos específicos si es necesario
+import "./TablaProductos.css"; 
 
 const TablaProductos = ({ columnas, datos, acciones }) => {
   return (

@@ -1,169 +1,207 @@
-import React, { useState } from "react";
-import useFirebaseCollection from "./components/hooks";
-import {
-  validateCompra,
-  formatNumber,
-} from "./components/utils";
-import InputNumerico from "./components/InputNumerico";
+import React, { useReducer } from "react";
+import FechaSelector from "./components/FechaSelector";
 import Proveedor from "./components/Proveedor";
 import Producto from "./components/Producto";
-import FechaSelector from "./components/FechaSelector";
+import InputNumerico from "./components/InputNumerico";
+import DynamicQuantityInput from "./components/DynamicQuantityInput";
 import TablaProductos from "./components/TablaProductos";
 import "./compras.css";
 
+// Estado inicial
+const initialState = {
+  compra: {
+    fecha: new Date().toISOString().split("T")[0],
+    proveedor: null,
+    producto: null,
+    cantidadTotal: 0,
+    zarzamora: 0,
+    tabora: 0,
+    precioCompra: 0,
+    numFactura: "",
+    formaPago: "",
+  },
+  productosLista: [],
+  error: "",
+};
+
+// Reducer
+const comprasReducer = (state, action) => {
+  switch (action.type) {
+    case "SET_FIELD":
+      return {
+        ...state,
+        compra: { ...state.compra, [action.payload.field]: action.payload.value },
+      };
+    case "ADD_PRODUCT":
+      if (!state.compra.producto || state.compra.cantidadTotal <= 0) {
+        return { ...state, error: "Debe seleccionar un producto y agregar una cantidad válida." };
+      }
+      return {
+        ...state,
+        productosLista: [
+          ...state.productosLista,
+          {
+            producto: state.compra.producto,
+            cantidadTotal: state.compra.cantidadTotal,
+            zarzamora: state.compra.zarzamora,
+            tabora: state.compra.tabora,
+            precioCompra: state.compra.precioCompra,
+          },
+        ],
+        compra: { ...initialState.compra, fecha: state.compra.fecha },
+        error: "",
+      };
+    case "REMOVE_PRODUCT":
+      return {
+        ...state,
+        productosLista: state.productosLista.filter((_, index) => index !== action.payload),
+      };
+    case "SET_ERROR":
+      return { ...state, error: action.payload };
+    case "CLEAR_ERROR":
+      return { ...state, error: "" };
+    case "RESET":
+      return initialState;
+    default:
+      return state;
+  }
+};
+
 const Compras = () => {
-  const [compra, setCompra] = useState({
-    fecha_compra: new Date().toISOString().split("T")[0],
-    forma_pago: "",
-    id_prov: "",
-    num_factura: "",
-  });
+  const [state, dispatch] = useReducer(comprasReducer, initialState);
 
-  const [productoActual, setProductoActual] = useState({
-    id_prod: "",
-    cantidad_total: "",
-    zarzamora: "",
-    tabora: "",
-    precio_compra: "",
-  });
-
-  const [productosLista, setProductosLista] = useState([]);
-  const proveedores = useFirebaseCollection("proveedores");
-
-  // Manejo genérico de cambios en la compra
-  const handleCompraChange = (field, value) => {
-    setCompra((prevState) => ({ ...prevState, [field]: value }));
+  // Manejador genérico para actualizar cualquier campo
+  const handleFieldChange = (field, value) => {
+    dispatch({ type: "SET_FIELD", payload: { field, value } });
   };
 
-  // Manejo genérico de cambios en el producto actual
-  const handleProductoChange = (field, value) => {
-    setProductoActual((prevState) => ({ ...prevState, [field]: value }));
-  };
-
-  // Agregar un producto a la lista
   const agregarProducto = () => {
-    const { id_prod, cantidad_total, zarzamora, tabora, precio_compra } = productoActual;
-
-    if (!id_prod || !cantidad_total || !zarzamora || !tabora || !precio_compra) {
-      alert("Por favor complete todos los campos del producto.");
-      return;
-    }
-
-    setProductosLista((prevState) => [...prevState, { ...productoActual }]);
-    setProductoActual({
-      id_prod: "",
-      cantidad_total: "",
-      zarzamora: "",
-      tabora: "",
-      precio_compra: "",
-    });
+    dispatch({ type: "ADD_PRODUCT" });
   };
 
-  // Registrar la compra
   const registrarCompra = () => {
-    const error = validateCompra(compra, productosLista);
-    if (error) {
-      alert(error);
+    if (state.productosLista.length === 0) {
+      dispatch({ type: "SET_ERROR", payload: "Debe agregar al menos un producto." });
       return;
     }
 
-    // Simulación de registro en Firebase
-    console.log("Compra registrada:", { compra, productosLista });
+    const compraFinal = {
+      ...state.compra,
+      productos: state.productosLista,
+    };
+
+    console.log("Compra registrada:", compraFinal);
     alert("Compra registrada exitosamente.");
-    setCompra({
-      fecha_compra: new Date().toISOString().split("T")[0],
-      forma_pago: "",
-      id_prov: "",
-      num_factura: "",
-    });
-    setProductosLista([]);
+    dispatch({ type: "RESET" });
   };
 
   return (
     <div className="compras-container">
       <h1>Registro de Compras</h1>
 
-      {/* Formulario para la información de la compra */}
-      <div className="formulario-compra">
-        <FechaSelector
-          label="Fecha de Compra"
-          value={compra.fecha_compra}
-          onChange={(value) => handleCompraChange("fecha_compra", value)}
+      {/* Mensaje de error */}
+      {state.error && <div className="error-message">{state.error}</div>}
+
+      {/* Fecha de Compra */}
+      <FechaSelector
+        value={state.compra.fecha}
+        onFechaChange={(fecha) => handleFieldChange("fecha", fecha)}
+      />
+
+      <div className="form-row">
+        {/* Proveedor */}
+        <Proveedor
+          onProveedorSelect={(proveedor) => handleFieldChange("proveedor", proveedor)}
         />
 
-        <div>
+        {/* Forma de Pago */}
+        <div className="form-field">
           <label>Forma de Pago:</label>
           <select
-            value={compra.forma_pago}
-            onChange={(e) => handleCompraChange("forma_pago", e.target.value)}
+            name="formaPago"
+            value={state.compra.formaPago}
+            onChange={(e) => handleFieldChange("formaPago", e.target.value)}
           >
             <option value="">Seleccionar</option>
             <option value="Contado">Contado</option>
             <option value="Crédito">Crédito</option>
           </select>
         </div>
-
-        <Proveedor
-          onProveedorSelect={(prov) => handleCompraChange("id_prov", prov.id)}
-        />
-
-        <InputNumerico
-          label="Número de Factura"
-          value={compra.num_factura}
-          onChange={(value) => handleCompraChange("num_factura", value)}
-        />
       </div>
 
-      {/* Formulario para agregar productos */}
-      <div className="formulario-productos">
+      <div className="form-row">
+        {/* Número de Factura */}
+        <div className="form-field">
+          <label>Número de Factura:</label>
+          <input
+            type="text"
+            name="numFactura"
+            value={state.compra.numFactura}
+            onChange={(e) => handleFieldChange("numFactura", e.target.value)}
+          />
+        </div>
+
+        {/* Producto */}
         <Producto
-          onProductoSelect={(prod) => handleProductoChange("id_prod", prod.id)}
+          onProductoSelect={(producto) => handleFieldChange("producto", producto)}
         />
-
-        <InputNumerico
-          label="Cantidad Total"
-          value={productoActual.cantidad_total}
-          onChange={(value) => handleProductoChange("cantidad_total", value)}
-        />
-
-        <InputNumerico
-          label="Cantidad Zarzamora"
-          value={productoActual.zarzamora}
-          onChange={(value) => handleProductoChange("zarzamora", value)}
-        />
-
-        <InputNumerico
-          label="Cantidad Tabora"
-          value={productoActual.tabora}
-          onChange={(value) => handleProductoChange("tabora", value)}
-        />
-
-        <InputNumerico
-          label="Precio de Compra"
-          value={productoActual.precio_compra}
-          onChange={(value) => handleProductoChange("precio_compra", value)}
-        />
-
-        <button onClick={agregarProducto} className="btn-agregar">
-          Agregar Producto
-        </button>
       </div>
 
-      {/* Tabla con los productos agregados */}
-      <TablaProductos
-        columnas={["Producto", "Cantidad Total", "Zarzamora", "Tabora", "Precio Compra"]}
-        datos={productosLista.map((prod) => ({
-          ...prod,
-          cantidad_total: formatNumber(prod.cantidad_total),
-          zarzamora: formatNumber(prod.zarzamora),
-          tabora: formatNumber(prod.tabora),
-          precio_compra: formatNumber(prod.precio_compra),
-        }))}
+      {/* Cantidad Total */}
+      <InputNumerico
+        label="Cantidad Total"
+        value={state.compra.cantidadTotal}
+        onChange={(value) => handleFieldChange("cantidadTotal", value)}
+        placeholder="Ingrese cantidad"
       />
 
-      <button onClick={registrarCompra} className="btn-registrar">
-        Registrar Compra
-      </button>
+      {/* Zarzamora y Tabora */}
+      <DynamicQuantityInput
+        totalQuantity={state.compra.cantidadTotal}
+        zarzamora={state.compra.zarzamora}
+        tabora={state.compra.tabora}
+        onChange={({ zarzamora, tabora }) => {
+          handleFieldChange("zarzamora", zarzamora);
+          handleFieldChange("tabora", tabora);
+        }}
+      />
+
+      {/* Precio de Compra */}
+      <InputNumerico
+        label="Precio de Compra"
+        value={state.compra.precioCompra}
+        onChange={(value) => handleFieldChange("precioCompra", value)}
+        placeholder="Ingrese precio"
+      />
+
+      {/* Lista de Productos */}
+      <TablaProductos
+        columnas={[
+          { titulo: "Producto", campo: "producto" },
+          { titulo: "Cantidad Total", campo: "cantidadTotal" },
+          { titulo: "Zarzamora", campo: "zarzamora" },
+          { titulo: "Tabora", campo: "tabora" },
+          { titulo: "Precio Compra", campo: "precioCompra" },
+        ]}
+        datos={state.productosLista}
+        acciones={[
+          {
+            texto: "Eliminar",
+            clase: "btn-eliminar",
+            onClick: (_, index) => dispatch({ type: "REMOVE_PRODUCT", payload: index }),
+          },
+        ]}
+      />
+
+      {/* Botones */}
+      <div className="buttons">
+        <button className="btn-add" onClick={agregarProducto}>
+          Agregar Producto
+        </button>
+        <button className="btn-register" onClick={registrarCompra}>
+          Registrar Compra
+        </button>
+      </div>
     </div>
   );
 };

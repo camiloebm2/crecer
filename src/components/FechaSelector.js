@@ -1,42 +1,45 @@
 import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 
-const FechaSelector = ({ onFechaChange }) => {
+const FechaSelector = ({ value, onFechaChange }) => {
   const [fecha, setFecha] = useState("");
 
-  // Obtener la fecha actual al cargar el componente
   useEffect(() => {
-    const fechaActual = new Date();
-    const fechaFormateada = fechaActual.toISOString().split("T")[0]; // Formato YYYY-MM-DD
-    setFecha(fechaFormateada);
+    const obtenerFechaLocalExacta = () => {
+      const hoy = new Date(); // Fecha actual
+      hoy.setHours(0, 0, 0, 0); // Reiniciar horas a las 00:00:00 para evitar desajustes
+      const anio = hoy.getFullYear();
+      const mes = String(hoy.getMonth() + 1).padStart(2, "0");
+      const dia = String(hoy.getDate()).padStart(2, "0");
+      return `${anio}-${mes}-${dia}`; // Formato YYYY-MM-DD
+    };
 
-    // Notificar la fecha inicial al componente padre
-    if (onFechaChange) {
-      onFechaChange(fechaFormateada);
-    }
-  }, [onFechaChange]);
+    const fechaInicial = value || obtenerFechaLocalExacta();
+    setFecha(fechaInicial); // Establecer la fecha inicial
+  }, [value]);
 
-  // Manejar cambios en el selector de fecha
-  const manejarCambioFecha = (e) => {
+  const handleChange = (e) => {
     const nuevaFecha = e.target.value;
-    setFecha(nuevaFecha);
-
-    // Notificar la nueva fecha al componente padre
-    if (onFechaChange) {
-      onFechaChange(nuevaFecha);
-    }
+    setFecha(nuevaFecha); // Actualizar la fecha seleccionada
+    onFechaChange(nuevaFecha); // Notificar al componente padre
   };
 
   return (
-    <div className="fecha-selector-container">
-      <label htmlFor="fecha-selector">Fecha de Compra:</label>
+    <div className="fecha-selector">
+      <label htmlFor="fecha">Fecha de Compra:</label>
       <input
-        id="fecha-selector"
         type="date"
+        id="fecha"
         value={fecha}
-        onChange={manejarCambioFecha}
+        onChange={handleChange}
       />
     </div>
   );
+};
+
+FechaSelector.propTypes = {
+  value: PropTypes.string, // Fecha inicial en formato YYYY-MM-DD
+  onFechaChange: PropTypes.func.isRequired, // Función para manejar cambios de fecha
 };
 
 export default FechaSelector;
