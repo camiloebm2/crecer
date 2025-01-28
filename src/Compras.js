@@ -1,207 +1,229 @@
-import React, { useReducer } from "react";
+import React, { useState, useEffect } from "react";
 import FechaSelector from "./components/FechaSelector";
-import Proveedor from "./components/Proveedor";
+import BuscarProveedor from "./components/BuscarProveedor";
+import BuscarPresentacion from "./components/BuscarPresentacion";
 import Producto from "./components/Producto";
-import InputNumerico from "./components/InputNumerico";
 import DynamicQuantityInput from "./components/DynamicQuantityInput";
-import TablaProductos from "./components/TablaProductos";
+import InputNumerico from "./components/InputNumerico";
 import "./compras.css";
 
-// Estado inicial
-const initialState = {
-  compra: {
+const Compras = () => {
+  const [compra, setCompra] = useState({
     fecha: new Date().toISOString().split("T")[0],
-    proveedor: null,
-    producto: null,
+    proveedor: "",
+    proveedorId: "",
+    producto: "",
+    presentacion: "",
     cantidadTotal: 0,
     zarzamora: 0,
     tabora: 0,
     precioCompra: 0,
     numFactura: "",
     formaPago: "",
-  },
-  productosLista: [],
-  error: "",
-};
+  });
 
-// Reducer
-const comprasReducer = (state, action) => {
-  switch (action.type) {
-    case "SET_FIELD":
-      return {
-        ...state,
-        compra: { ...state.compra, [action.payload.field]: action.payload.value },
-      };
-    case "ADD_PRODUCT":
-      if (!state.compra.producto || state.compra.cantidadTotal <= 0) {
-        return { ...state, error: "Debe seleccionar un producto y agregar una cantidad válida." };
-      }
-      return {
-        ...state,
-        productosLista: [
-          ...state.productosLista,
-          {
-            producto: state.compra.producto,
-            cantidadTotal: state.compra.cantidadTotal,
-            zarzamora: state.compra.zarzamora,
-            tabora: state.compra.tabora,
-            precioCompra: state.compra.precioCompra,
-          },
-        ],
-        compra: { ...initialState.compra, fecha: state.compra.fecha },
-        error: "",
-      };
-    case "REMOVE_PRODUCT":
-      return {
-        ...state,
-        productosLista: state.productosLista.filter((_, index) => index !== action.payload),
-      };
-    case "SET_ERROR":
-      return { ...state, error: action.payload };
-    case "CLEAR_ERROR":
-      return { ...state, error: "" };
-    case "RESET":
-      return initialState;
-    default:
-      return state;
-  }
-};
+  const [productosLista, setProductosLista] = useState([]);
+  const [totalFactura, setTotalFactura] = useState(0);
+  const [indiceEdicion, setIndiceEdicion] = useState(null);
 
-const Compras = () => {
-  const [state, dispatch] = useReducer(comprasReducer, initialState);
+  useEffect(() => {
+    console.log("Compra actualizada:", compra);
+  }, [compra]);
 
-  // Manejador genérico para actualizar cualquier campo
-  const handleFieldChange = (field, value) => {
-    dispatch({ type: "SET_FIELD", payload: { field, value } });
+  useEffect(() => {
+    console.log("Lista de productos actualizada:", productosLista);
+    const total = productosLista.reduce(
+      (sum, producto) => sum + producto.cantidadTotal * producto.precioCompra,
+      0
+    );
+    setTotalFactura(total);
+  }, [productosLista]);
+
+  // Manejo de selección de proveedor
+  const handleProveedorSelect = (proveedor) => {
+    console.log("Proveedor seleccionado:", proveedor);
+    setCompra((prev) => ({
+      ...prev,
+      proveedor: proveedor.nombre,
+      proveedorId: proveedor.id,
+    }));
   };
 
-  const agregarProducto = () => {
-    dispatch({ type: "ADD_PRODUCT" });
+  // Manejo de selección de producto (GUARDANDO SOLO EL NOMBRE)
+  const handleProductoSelect = (producto) => {
+    setCompra((prev) => ({
+      ...prev,
+      producto: producto.nombre_prod, // ✅ Solo guardamos el nombre del producto
+    }));
   };
 
-  const registrarCompra = () => {
-    if (state.productosLista.length === 0) {
-      dispatch({ type: "SET_ERROR", payload: "Debe agregar al menos un producto." });
+  // Agregar o actualizar producto en la lista
+  const agregarOActualizarProducto = () => {
+    console.log("Estado actual de compra antes de validar:", compra);
+
+    if (!compra.producto || !compra.presentacion || compra.cantidadTotal <= 0) {
+      alert("Debe completar los datos del producto antes de agregarlo.");
       return;
     }
 
-    const compraFinal = {
-      ...state.compra,
-      productos: state.productosLista,
+    const nuevoProducto = {
+      producto: compra.producto,
+      presentacion: compra.presentacion,
+      cantidadTotal: Number(compra.cantidadTotal),
+      zarzamora: Number(compra.zarzamora),
+      tabora: Number(compra.tabora),
+      precioCompra: Number(compra.precioCompra),
     };
 
-    console.log("Compra registrada:", compraFinal);
-    alert("Compra registrada exitosamente.");
-    dispatch({ type: "RESET" });
+    console.log("Procesando producto:", nuevoProducto);
+
+    setProductosLista((prevLista) => {
+      if (indiceEdicion !== null) {
+        // ✅ Si se está editando, actualiza el producto en la lista
+        const nuevaLista = [...prevLista];
+        nuevaLista[indiceEdicion] = nuevoProducto;
+        return nuevaLista;
+      } else {
+        // ✅ Si es un nuevo producto, agrégalo a la lista
+        return [...prevLista, nuevoProducto];
+      }
+    });
+
+    limpiarFormulario();
+  };
+
+  // Función para seleccionar producto y editarlo
+  const seleccionarProducto = (index) => {
+    const producto = productosLista[index];
+    setCompra({
+      ...compra,
+      producto: producto.producto,
+      presentacion: producto.presentacion,
+      cantidadTotal: producto.cantidadTotal,
+      zarzamora: producto.zarzamora,
+      tabora: producto.tabora,
+      precioCompra: producto.precioCompra,
+    });
+    setIndiceEdicion(index);
+  };
+
+  // Función para eliminar producto de la lista
+  const eliminarProducto = (index) => {
+    const nuevaLista = productosLista.filter((_, i) => i !== index);
+    setProductosLista(nuevaLista);
+  };
+
+  // Limpiar formulario después de agregar o actualizar producto
+  const limpiarFormulario = () => {
+    setCompra((prev) => ({
+      ...prev,
+      producto: "",
+      presentacion: "",
+      cantidadTotal: 0,
+      zarzamora: 0,
+      tabora: 0,
+      precioCompra: 0,
+    }));
+    setIndiceEdicion(null);
   };
 
   return (
     <div className="compras-container">
       <h1>Registro de Compras</h1>
 
-      {/* Mensaje de error */}
-      {state.error && <div className="error-message">{state.error}</div>}
-
-      {/* Fecha de Compra */}
       <FechaSelector
-        value={state.compra.fecha}
-        onFechaChange={(fecha) => handleFieldChange("fecha", fecha)}
+        onFechaChange={(fecha) => setCompra((prev) => ({ ...prev, fecha }))}
       />
 
       <div className="form-row">
-        {/* Proveedor */}
-        <Proveedor
-          onProveedorSelect={(proveedor) => handleFieldChange("proveedor", proveedor)}
-        />
-
-        {/* Forma de Pago */}
-        <div className="form-field">
-          <label>Forma de Pago:</label>
-          <select
-            name="formaPago"
-            value={state.compra.formaPago}
-            onChange={(e) => handleFieldChange("formaPago", e.target.value)}
-          >
-            <option value="">Seleccionar</option>
-            <option value="Contado">Contado</option>
-            <option value="Crédito">Crédito</option>
-          </select>
-        </div>
+        <BuscarProveedor onProveedorSelect={handleProveedorSelect} />
       </div>
+
+      {compra.proveedor && (
+        <p>
+          <strong>Proveedor Seleccionado:</strong> {compra.proveedor} (ID: {compra.proveedorId})
+        </p>
+      )}
 
       <div className="form-row">
-        {/* Número de Factura */}
-        <div className="form-field">
-          <label>Número de Factura:</label>
-          <input
-            type="text"
-            name="numFactura"
-            value={state.compra.numFactura}
-            onChange={(e) => handleFieldChange("numFactura", e.target.value)}
-          />
-        </div>
-
-        {/* Producto */}
-        <Producto
-          onProductoSelect={(producto) => handleFieldChange("producto", producto)}
+        <BuscarPresentacion
+          onPresentacionSelect={(presentacion) =>
+            setCompra((prev) => ({ ...prev, presentacion }))
+          }
         />
       </div>
 
-      {/* Cantidad Total */}
+      <Producto onProductoSelect={handleProductoSelect} />
+
       <InputNumerico
         label="Cantidad Total"
-        value={state.compra.cantidadTotal}
-        onChange={(value) => handleFieldChange("cantidadTotal", value)}
+        value={compra.cantidadTotal}
+        onChange={(value) =>
+          setCompra((prev) => ({ ...prev, cantidadTotal: Number(value) }))
+        }
         placeholder="Ingrese cantidad"
       />
 
-      {/* Zarzamora y Tabora */}
       <DynamicQuantityInput
-        totalQuantity={state.compra.cantidadTotal}
-        zarzamora={state.compra.zarzamora}
-        tabora={state.compra.tabora}
-        onChange={({ zarzamora, tabora }) => {
-          handleFieldChange("zarzamora", zarzamora);
-          handleFieldChange("tabora", tabora);
-        }}
+        totalQuantity={Number(compra.cantidadTotal)}
+        zarzamora={Number(compra.zarzamora)}
+        tabora={Number(compra.tabora)}
+        onChange={({ zarzamora, tabora }) =>
+          setCompra((prev) => ({ ...prev, zarzamora, tabora }))
+        }
       />
 
-      {/* Precio de Compra */}
       <InputNumerico
         label="Precio de Compra"
-        value={state.compra.precioCompra}
-        onChange={(value) => handleFieldChange("precioCompra", value)}
+        value={compra.precioCompra}
+        onChange={(value) =>
+          setCompra((prev) => ({ ...prev, precioCompra: Number(value) }))
+        }
         placeholder="Ingrese precio"
       />
 
-      {/* Lista de Productos */}
-      <TablaProductos
-        columnas={[
-          { titulo: "Producto", campo: "producto" },
-          { titulo: "Cantidad Total", campo: "cantidadTotal" },
-          { titulo: "Zarzamora", campo: "zarzamora" },
-          { titulo: "Tabora", campo: "tabora" },
-          { titulo: "Precio Compra", campo: "precioCompra" },
-        ]}
-        datos={state.productosLista}
-        acciones={[
-          {
-            texto: "Eliminar",
-            clase: "btn-eliminar",
-            onClick: (_, index) => dispatch({ type: "REMOVE_PRODUCT", payload: index }),
-          },
-        ]}
-      />
+      <button className="btn-agregar" onClick={agregarOActualizarProducto}>
+        {indiceEdicion !== null ? "Actualizar Producto" : "Agregar Producto"}
+      </button>
 
-      {/* Botones */}
-      <div className="buttons">
-        <button className="btn-add" onClick={agregarProducto}>
-          Agregar Producto
-        </button>
-        <button className="btn-register" onClick={registrarCompra}>
-          Registrar Compra
-        </button>
+      <div className="productos-registrados">
+        <h2>Productos Registrados</h2>
+        {productosLista.length > 0 ? (
+          <table>
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Presentación</th>
+                <th>Cantidad</th>
+                <th>Zarzamora</th>
+                <th>Tabora</th>
+                <th>Total</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {productosLista.map((producto, index) => (
+                <tr key={index}>
+                  <td>{producto.producto}</td>
+                  <td>{producto.presentacion}</td>
+                  <td>{producto.cantidadTotal}</td>
+                  <td>{producto.zarzamora}</td>
+                  <td>{producto.tabora}</td>
+                  <td>${(producto.cantidadTotal * producto.precioCompra).toFixed(2)}</td>
+                  <td>
+                    <button onClick={() => seleccionarProducto(index)}>Editar</button>
+                    <button onClick={() => eliminarProducto(index)}>Eliminar</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p>No hay productos registrados.</p>
+        )}
       </div>
+
+      <h3>Total Factura: ${totalFactura.toFixed(2)}</h3>
     </div>
   );
 };
