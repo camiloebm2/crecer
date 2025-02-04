@@ -1,0 +1,19 @@
+/* SubirFactura.css */
+.btn-subir-factura {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background-color: #28a745;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .btn-subir-factura:hover {
+    background-color: #218838;
+  }
+  

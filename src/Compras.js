@@ -5,225 +5,88 @@ import BuscarPresentacion from "./components/BuscarPresentacion";
 import Producto from "./components/Producto";
 import DynamicQuantityInput from "./components/DynamicQuantityInput";
 import InputNumerico from "./components/InputNumerico";
+import ProductosRegistrados from "./components/ProductosRegistrados";
+import SubirFactura from "./components/SubirFactura";
 import "./compras.css";
 
 const Compras = () => {
-  const [compra, setCompra] = useState({
+  const initialState = {
     fecha: new Date().toISOString().split("T")[0],
     proveedor: "",
     proveedorId: "",
+    numFactura: "",
     producto: "",
     presentacion: "",
     cantidadTotal: 0,
     zarzamora: 0,
     tabora: 0,
     precioCompra: 0,
-    numFactura: "",
-    formaPago: "",
-  });
+    id_prod: "",
+  };
 
+  const [compra, setCompra] = useState(initialState);
   const [productosLista, setProductosLista] = useState([]);
   const [totalFactura, setTotalFactura] = useState(0);
   const [indiceEdicion, setIndiceEdicion] = useState(null);
 
   useEffect(() => {
-    console.log("Compra actualizada:", compra);
-  }, [compra]);
-
-  useEffect(() => {
-    console.log("Lista de productos actualizada:", productosLista);
-    const total = productosLista.reduce(
-      (sum, producto) => sum + producto.cantidadTotal * producto.precioCompra,
-      0
+    setTotalFactura(
+      productosLista.reduce(
+        (sum, producto) => sum + producto.cantidadTotal * producto.precioCompra,
+        0
+      )
     );
-    setTotalFactura(total);
   }, [productosLista]);
 
-  // Manejo de selección de proveedor
-  const handleProveedorSelect = (proveedor) => {
-    console.log("Proveedor seleccionado:", proveedor);
-    setCompra((prev) => ({
-      ...prev,
-      proveedor: proveedor.nombre,
-      proveedorId: proveedor.id,
-    }));
-  };
-
-  // Manejo de selección de producto (GUARDANDO SOLO EL NOMBRE)
-  const handleProductoSelect = (producto) => {
-    setCompra((prev) => ({
-      ...prev,
-      producto: producto.nombre_prod, // ✅ Solo guardamos el nombre del producto
-    }));
-  };
-
-  // Agregar o actualizar producto en la lista
   const agregarOActualizarProducto = () => {
-    console.log("Estado actual de compra antes de validar:", compra);
-
     if (!compra.producto || !compra.presentacion || compra.cantidadTotal <= 0) {
       alert("Debe completar los datos del producto antes de agregarlo.");
       return;
     }
 
     const nuevoProducto = {
-      producto: compra.producto,
-      presentacion: compra.presentacion,
+      ...compra,
       cantidadTotal: Number(compra.cantidadTotal),
       zarzamora: Number(compra.zarzamora),
       tabora: Number(compra.tabora),
       precioCompra: Number(compra.precioCompra),
+      id_prod: compra.id_prod || "", // Asegurar que tenga un id_prod válido
     };
 
-    console.log("Procesando producto:", nuevoProducto);
+    if (!nuevoProducto.id_prod) {
+      alert("El producto seleccionado no tiene un ID válido.");
+      return;
+    }
 
-    setProductosLista((prevLista) => {
-      if (indiceEdicion !== null) {
-        // ✅ Si se está editando, actualiza el producto en la lista
-        const nuevaLista = [...prevLista];
-        nuevaLista[indiceEdicion] = nuevoProducto;
-        return nuevaLista;
-      } else {
-        // ✅ Si es un nuevo producto, agrégalo a la lista
-        return [...prevLista, nuevoProducto];
-      }
-    });
+    setProductosLista((prevLista) =>
+      indiceEdicion !== null
+        ? prevLista.map((p, idx) => (idx === indiceEdicion ? nuevoProducto : p))
+        : [...prevLista, nuevoProducto]
+    );
 
-    limpiarFormulario();
-  };
-
-  // Función para seleccionar producto y editarlo
-  const seleccionarProducto = (index) => {
-    const producto = productosLista[index];
-    setCompra({
-      ...compra,
-      producto: producto.producto,
-      presentacion: producto.presentacion,
-      cantidadTotal: producto.cantidadTotal,
-      zarzamora: producto.zarzamora,
-      tabora: producto.tabora,
-      precioCompra: producto.precioCompra,
-    });
-    setIndiceEdicion(index);
-  };
-
-  // Función para eliminar producto de la lista
-  const eliminarProducto = (index) => {
-    const nuevaLista = productosLista.filter((_, i) => i !== index);
-    setProductosLista(nuevaLista);
-  };
-
-  // Limpiar formulario después de agregar o actualizar producto
-  const limpiarFormulario = () => {
-    setCompra((prev) => ({
-      ...prev,
-      producto: "",
-      presentacion: "",
-      cantidadTotal: 0,
-      zarzamora: 0,
-      tabora: 0,
-      precioCompra: 0,
-    }));
     setIndiceEdicion(null);
+    setCompra(initialState);
   };
 
   return (
     <div className="compras-container">
       <h1>Registro de Compras</h1>
-
-      <FechaSelector
-        onFechaChange={(fecha) => setCompra((prev) => ({ ...prev, fecha }))}
-      />
-
-      <div className="form-row">
-        <BuscarProveedor onProveedorSelect={handleProveedorSelect} />
-      </div>
-
-      {compra.proveedor && (
-        <p>
-          <strong>Proveedor Seleccionado:</strong> {compra.proveedor} (ID: {compra.proveedorId})
-        </p>
-      )}
-
-      <div className="form-row">
-        <BuscarPresentacion
-          onPresentacionSelect={(presentacion) =>
-            setCompra((prev) => ({ ...prev, presentacion }))
-          }
-        />
-      </div>
-
-      <Producto onProductoSelect={handleProductoSelect} />
-
-      <InputNumerico
-        label="Cantidad Total"
-        value={compra.cantidadTotal}
-        onChange={(value) =>
-          setCompra((prev) => ({ ...prev, cantidadTotal: Number(value) }))
-        }
-        placeholder="Ingrese cantidad"
-      />
-
-      <DynamicQuantityInput
-        totalQuantity={Number(compra.cantidadTotal)}
-        zarzamora={Number(compra.zarzamora)}
-        tabora={Number(compra.tabora)}
-        onChange={({ zarzamora, tabora }) =>
-          setCompra((prev) => ({ ...prev, zarzamora, tabora }))
-        }
-      />
-
-      <InputNumerico
-        label="Precio de Compra"
-        value={compra.precioCompra}
-        onChange={(value) =>
-          setCompra((prev) => ({ ...prev, precioCompra: Number(value) }))
-        }
-        placeholder="Ingrese precio"
-      />
-
+      <FechaSelector onFechaChange={(fecha) => setCompra((prev) => ({ ...prev, fecha }))} disabled={productosLista.length > 0} />
+      <BuscarProveedor onProveedorSelect={(proveedor) => setCompra((prev) => ({ ...prev, proveedor: proveedor.nombre, proveedorId: proveedor.id }))} disabled={productosLista.length > 0} />
+      <InputNumerico label="Número de Factura" value={compra.numFactura} onChange={(value) => setCompra((prev) => ({ ...prev, numFactura: value }))} placeholder="Ingrese número de factura" disabled={productosLista.length > 0} />
+      <BuscarPresentacion onPresentacionSelect={(presentacion) => setCompra((prev) => ({ ...prev, presentacion }))} />
+      <Producto onProductoSelect={(producto) => setCompra((prev) => ({ ...prev, producto: producto.nombre_prod, id_prod: producto.id_prod }))} />
+      <InputNumerico label="Cantidad Total" value={compra.cantidadTotal} onChange={(value) => setCompra((prev) => ({ ...prev, cantidadTotal: Number(value) }))} />
+      <DynamicQuantityInput totalQuantity={compra.cantidadTotal} zarzamora={compra.zarzamora} tabora={compra.tabora} onChange={({ zarzamora, tabora }) => setCompra((prev) => ({ ...prev, zarzamora, tabora }))} />
+      <InputNumerico label="Precio de Compra" value={compra.precioCompra} onChange={(value) => setCompra((prev) => ({ ...prev, precioCompra: Number(value) }))} />
       <button className="btn-agregar" onClick={agregarOActualizarProducto}>
         {indiceEdicion !== null ? "Actualizar Producto" : "Agregar Producto"}
       </button>
-
-      <div className="productos-registrados">
-        <h2>Productos Registrados</h2>
-        {productosLista.length > 0 ? (
-          <table>
-            <thead>
-              <tr>
-                <th>Producto</th>
-                <th>Presentación</th>
-                <th>Cantidad</th>
-                <th>Zarzamora</th>
-                <th>Tabora</th>
-                <th>Total</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {productosLista.map((producto, index) => (
-                <tr key={index}>
-                  <td>{producto.producto}</td>
-                  <td>{producto.presentacion}</td>
-                  <td>{producto.cantidadTotal}</td>
-                  <td>{producto.zarzamora}</td>
-                  <td>{producto.tabora}</td>
-                  <td>${(producto.cantidadTotal * producto.precioCompra).toFixed(2)}</td>
-                  <td>
-                    <button onClick={() => seleccionarProducto(index)}>Editar</button>
-                    <button onClick={() => eliminarProducto(index)}>Eliminar</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p>No hay productos registrados.</p>
-        )}
-      </div>
-
+      <ProductosRegistrados productosLista={productosLista} setProductosLista={setProductosLista} setCompra={setCompra} setIndiceEdicion={setIndiceEdicion} />
       <h3>Total Factura: ${totalFactura.toFixed(2)}</h3>
+      <div className="subir-factura-container">
+        <SubirFactura productosLista={productosLista} setProductosLista={setProductosLista} setCompra={setCompra} />
+      </div>
     </div>
   );
 };
