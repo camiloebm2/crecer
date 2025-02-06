@@ -47,11 +47,13 @@ const SubirFactura = ({ productosLista, setProductosLista, setCompra }) => {
         const docId = querySnapshot.docs[0].id;
         const productoRef = doc(db, "productos", docId);
 
+        // Datos a actualizar en Firestore
         const updateData = {
           fecha_compra: fechaActual,
           cant_tab: Number(producto.tabora) || 0,
           cant_zarza: Number(producto.zarzamora) || 0,
           precio_compra: Number(producto.precioCompra) || 0,
+          presentacion: producto.presentacion || "No especificada", // 🔹 Se asegura que la presentación se actualice correctamente
         };
 
         console.log(`✅ Actualizando producto ${docId} con datos:`, updateData);
@@ -66,6 +68,7 @@ const SubirFactura = ({ productosLista, setProductosLista, setCompra }) => {
         proveedor: "",
         proveedorId: "",
         numFactura: "",
+        tipoPago: "debito", // Se mantiene la opción de pago
         producto: "",
         presentacion: "",
         cantidadTotal: 0,

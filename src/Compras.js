@@ -7,6 +7,8 @@ import DynamicQuantityInput from "./components/DynamicQuantityInput";
 import InputNumerico from "./components/InputNumerico";
 import ProductosRegistrados from "./components/ProductosRegistrados";
 import SubirFactura from "./components/SubirFactura";
+import { updateDoc, doc } from "firebase/firestore";
+import db from "./firebase";
 import "./compras.css";
 
 const Compras = () => {
@@ -15,8 +17,9 @@ const Compras = () => {
     proveedor: "",
     proveedorId: "",
     numFactura: "",
+    tipoPago: "debito",
     producto: "",
-    presentacion: "",
+    presentacion: "Unidad",
     cantidadTotal: 0,
     zarzamora: 0,
     tabora: 0,
@@ -50,7 +53,7 @@ const Compras = () => {
       zarzamora: Number(compra.zarzamora),
       tabora: Number(compra.tabora),
       precioCompra: Number(compra.precioCompra),
-      id_prod: compra.id_prod || "", // Asegurar que tenga un id_prod válido
+      id_prod: compra.id_prod || "",
     };
 
     if (!nuevoProducto.id_prod) {
@@ -68,12 +71,48 @@ const Compras = () => {
     setCompra(initialState);
   };
 
+  const subirFactura = async () => {
+    try {
+      const actualizaciones = productosLista.map(async (producto) => {
+        if (!producto.id_prod) {
+          console.error("Producto sin ID válido:", producto);
+          return;
+        }
+
+        const productoRef = doc(db, "productos", producto.id_prod);
+        
+        console.log(`Actualizando producto ${producto.id_prod} con presentación: ${producto.presentacion}`);
+
+        await updateDoc(productoRef, {
+          presentacion: producto.presentacion,
+          fecha_compra: compra.fecha,
+        });
+      });
+
+      await Promise.all(actualizaciones);
+      alert("Factura subida y presentación actualizada en Firebase.");
+      setProductosLista([]);
+      setCompra(initialState);
+    } catch (error) {
+      console.error("Error al subir la factura:", error);
+    }
+  };
+
   return (
     <div className="compras-container">
       <h1>Registro de Compras</h1>
       <FechaSelector onFechaChange={(fecha) => setCompra((prev) => ({ ...prev, fecha }))} disabled={productosLista.length > 0} />
       <BuscarProveedor onProveedorSelect={(proveedor) => setCompra((prev) => ({ ...prev, proveedor: proveedor.nombre, proveedorId: proveedor.id }))} disabled={productosLista.length > 0} />
       <InputNumerico label="Número de Factura" value={compra.numFactura} onChange={(value) => setCompra((prev) => ({ ...prev, numFactura: value }))} placeholder="Ingrese número de factura" disabled={productosLista.length > 0} />
+      
+      <div className="tipo-pago-container">
+        <label>Tipo de Pago:</label>
+        <select value={compra.tipoPago} onChange={(e) => setCompra((prev) => ({ ...prev, tipoPago: e.target.value }))}>
+          <option value="debito">Débito</option>
+          <option value="credito">Crédito</option>
+        </select>
+      </div>
+      
       <BuscarPresentacion onPresentacionSelect={(presentacion) => setCompra((prev) => ({ ...prev, presentacion }))} />
       <Producto onProductoSelect={(producto) => setCompra((prev) => ({ ...prev, producto: producto.nombre_prod, id_prod: producto.id_prod }))} />
       <InputNumerico label="Cantidad Total" value={compra.cantidadTotal} onChange={(value) => setCompra((prev) => ({ ...prev, cantidadTotal: Number(value) }))} />
@@ -85,7 +124,7 @@ const Compras = () => {
       <ProductosRegistrados productosLista={productosLista} setProductosLista={setProductosLista} setCompra={setCompra} setIndiceEdicion={setIndiceEdicion} />
       <h3>Total Factura: ${totalFactura.toFixed(2)}</h3>
       <div className="subir-factura-container">
-        <SubirFactura productosLista={productosLista} setProductosLista={setProductosLista} setCompra={setCompra} />
+        <SubirFactura productosLista={productosLista} setProductosLista={setProductosLista} setCompra={setCompra} onSubmit={subirFactura} />
       </div>
     </div>
   );
