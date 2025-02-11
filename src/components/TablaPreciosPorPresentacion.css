@@ -1,0 +1,61 @@
+/* Botón Activar Presentaciones */
+.btn-activar {
+  background-color: #28a745;
+  color: white;
+  padding: 8px 12px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+.btn-activar:hover {
+  background-color: #218838;
+}
+
+/* Botón Desactivar */
+.btn-desactivar {
+  background-color: #dc3545;
+  color: white;
+  padding: 8px 12px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+.btn-desactivar:hover {
+  background-color: #c82333;
+}
+
+/* Modal */
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  border-radius: 5px;
+  width: 50%;
+}
+
+.modal-content {
+  text-align: center;
+}
+
+.btn-cerrar {
+  background-color: #007bff;
+  color: white;
+  padding: 8px 12px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-top: 10px;
+}
+
+.btn-cerrar:hover {
+  background-color: #0056b3;
+}

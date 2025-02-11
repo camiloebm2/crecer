@@ -9,7 +9,7 @@ const CambioPrecios = () => {
   const [productos, setProductos] = useState([]);
   const [filtro, setFiltro] = useState("todos");
   const [cambios, setCambios] = useState({});
-  
+
   const fechaHoy = new Date().toISOString().split("T")[0];
 
   useEffect(() => {

@@ -4,43 +4,46 @@ import PropTypes from "prop-types";
 const InputNumerico = ({ label, value, onChange, placeholder }) => {
   const formatValue = (num) => {
     if (num === "" || num === null || num === undefined) return "";
-    const [integer, decimal] = num.toString().split(".");
-    const formattedInteger = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ","); // Agregar comas
+    const numStr = num.toString().replace(/,/g, "");
+    const [integer, decimal] = numStr.split(".");
+    const formattedInteger = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     return decimal !== undefined ? `${formattedInteger}.${decimal}` : formattedInteger;
   };
 
   const handleInputChange = (e) => {
-    const rawValue = e.target.value.replace(/,/g, ""); // Quitar comas antes de procesar
+    let rawValue = e.target.value.replace(/,/g, "");
 
-    // Permitir solo números y hasta 2 decimales
-    if (/^\d*\.?\d{0,2}$/.test(rawValue)) {
-      // Evitar ceros iniciales innecesarios, excepto si es "0."
+    const isNegativeAllowed = label === "Utilidad (%)";
+
+    if (/^-?\d*\.?\d{0,2}$/.test(rawValue) || rawValue === "") {
       if (rawValue.startsWith("0") && rawValue.length > 1 && rawValue[1] !== ".") {
-        onChange(rawValue.replace(/^0+/, ""));
-      } else {
-        onChange(rawValue);
+        rawValue = rawValue.replace(/^0+/, "");
       }
+      if (rawValue.startsWith("-") && !isNegativeAllowed) {
+        return;
+      }
+      onChange(rawValue);
     }
   };
 
   return (
     <div className="input-numerico">
-      <label>{label}</label>
+      {label && <label>{label}</label>}
       <input
         type="text"
-        value={formatValue(value)} // Formatear el número con comas y punto decimal
+        value={formatValue(value)}
         onChange={handleInputChange}
-        placeholder={placeholder}
+        placeholder={placeholder || "Ingrese un valor"}
       />
     </div>
   );
 };
 
 InputNumerico.propTypes = {
-  label: PropTypes.string.isRequired, // Etiqueta del campo
-  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired, // Valor actual
-  onChange: PropTypes.func.isRequired, // Función para manejar cambios
-  placeholder: PropTypes.string, // Texto de marcador de posición
+  label: PropTypes.string,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  onChange: PropTypes.func.isRequired,
+  placeholder: PropTypes.string,
 };
 
 export default InputNumerico;
