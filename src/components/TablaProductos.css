@@ -1,0 +1,71 @@
+/* TablaProductos.css */
+.tabla-container {
+  width: 100%;
+  margin: 20px auto;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+thead {
+  background-color: #007bff;
+  color: white;
+}
+
+th, td {
+  padding: 10px;
+  border: 1px solid #ddd;
+  text-align: center;
+}
+
+tbody tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+tbody tr:hover {
+  background-color: #d1e7fd;
+}
+
+/* Estilos para el botón de activación */
+.btn-activar {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.btn-activar:hover {
+  background-color: #218838;
+}
+
+/* Botón de cerrar */
+.btn-cerrar {
+  background-color: #dc3545;
+  color: white;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-cerrar:hover {
+  background-color: #c82333;
+}
+
+/* Estilo para las filas de productos clickeables */
+.producto-clickable {
+  cursor: pointer;
+  font-weight: bold;
+  color: #007bff;
+}
+
+.producto-clickable:hover {
+  text-decoration: underline;
+}

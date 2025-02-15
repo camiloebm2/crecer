@@ -13,16 +13,13 @@ const InputNumerico = ({ label, value, onChange, placeholder }) => {
   const handleInputChange = (e) => {
     let rawValue = e.target.value.replace(/,/g, "");
 
-    const isNegativeAllowed = label === "Utilidad (%)";
-
-    if (/^-?\d*\.?\d{0,2}$/.test(rawValue) || rawValue === "") {
+    if (/^-?\d*\.?\d{0,2}$/.test(rawValue)) {
       if (rawValue.startsWith("0") && rawValue.length > 1 && rawValue[1] !== ".") {
         rawValue = rawValue.replace(/^0+/, "");
       }
-      if (rawValue.startsWith("-") && !isNegativeAllowed) {
-        return;
-      }
       onChange(rawValue);
+    } else if (rawValue === "") {
+      onChange("");
     }
   };
 

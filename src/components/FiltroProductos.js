@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 
 const FiltroProductos = ({ filtro, setFiltro }) => {
   return (
@@ -10,6 +11,11 @@ const FiltroProductos = ({ filtro, setFiltro }) => {
       </select>
     </div>
   );
+};
+
+FiltroProductos.propTypes = {
+  filtro: PropTypes.string.isRequired,
+  setFiltro: PropTypes.func.isRequired,
 };
 
 export default FiltroProductos;
